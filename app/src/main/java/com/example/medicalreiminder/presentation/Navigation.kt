@@ -14,6 +14,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.example.medicalreiminder.model.utils.navigateAndDontComeBack
+import com.example.medicalreiminder.viewModels.AlertViewModel
 import com.example.medicalreiminder.viewModels.AuthenticationViewModel
 import com.example.medicalreiminder.viewModels.ReminderViewModel
 import kotlinx.serialization.Serializable
@@ -27,6 +28,9 @@ object SignUp
 
 @Serializable
 object Main
+
+@Serializable
+object Alerts
 
 @Serializable
 data class EditReminder(
@@ -56,6 +60,7 @@ fun Navigation(
     NavHost(navController = navController, startDestination = SignIn) {
         val authenticationViewModel = AuthenticationViewModel(appContext)
         val reminderViewModel = ReminderViewModel(appContext)
+        val alertViewModel = AlertViewModel()
         composable<SignIn> {
             LoginPage(modifier, authenticationViewModel, onLogIn =  {
                 navController.navigateAndDontComeBack(Main)
@@ -78,6 +83,7 @@ fun Navigation(
             MainScreen(
                 ReminderViewModel = reminderViewModel,
                 authenticationViewModel = authenticationViewModel,
+                alertViewModel = alertViewModel,
                 modifier = modifier,
                 onAddMed = { name, ft, tf, dose ->
                     navController.navigate(route = AddReminder(name, ft, tf, dose))
@@ -87,6 +93,18 @@ fun Navigation(
                 },
                 onLogout = {
                     navController.navigateAndDontComeBack(SignIn)
+                },
+                onAlerts = {
+                    navController.navigate(route = Alerts)
+                }
+            )
+        }
+        composable<Alerts> {
+            AlertsScreen(
+                modifier = modifier,
+                alertViewModel = alertViewModel,
+                onBack = {
+                    navController.popBackStack()
                 }
             )
         }

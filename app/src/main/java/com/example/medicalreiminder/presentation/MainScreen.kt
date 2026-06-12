@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import com.example.medicalreiminder.R
 import com.example.medicalreiminder.cancelAlarm
 import com.example.medicalreiminder.viewModels.AuthenticationViewModel
+import com.example.medicalreiminder.viewModels.AlertViewModel
 import com.example.medicalreiminder.viewModels.ReminderViewModel
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -68,9 +69,11 @@ fun MainScreen(
     modifier: Modifier,
     ReminderViewModel: ReminderViewModel,
     authenticationViewModel: AuthenticationViewModel,
+    alertViewModel: AlertViewModel,
     onAddMed: (String, Long, Long, String) -> Unit,
     onEditMed: (Int, String, Long, Long, String) -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onAlerts: () -> Unit
 ) {
     val medications = ReminderViewModel.reminders.collectAsState(emptyList()).value.toMutableList()
     val context = LocalContext.current
@@ -103,6 +106,7 @@ fun MainScreen(
         context, permission
     ) == PackageManager.PERMISSION_GRANTED
     LaunchedEffect(Unit) {
+        alertViewModel.saveDeviceToken()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !isGranted) {
             shouldRequestPermission.value = true
         }
@@ -167,9 +171,17 @@ fun MainScreen(
                 onDismissRequest = { menuExpanded = false }
             ) {
                 DropdownMenuItem(
+                    text = { Text("Robot Alerts") },
+                    onClick = {
+                        menuExpanded = false
+                        onAlerts()
+                    }
+                )
+                DropdownMenuItem(
                     text = { Text("Logout") },
                     onClick = {
                         menuExpanded = false
+                        alertViewModel.stopListening()
                        authenticationViewModel.logOut()
                         onLogout()
                     }

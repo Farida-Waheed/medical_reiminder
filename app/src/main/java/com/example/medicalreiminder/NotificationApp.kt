@@ -15,5 +15,13 @@ class NotificationApp: Application() {
         notificationChannel.description = "Your medicine reminders"
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(notificationChannel)
+
+        val robotAlertChannel = NotificationChannel(
+            RobotAlertMessagingService.ROBOT_ALERT_CHANNEL_ID,
+            "Robot alerts",
+            NotificationManager.IMPORTANCE_HIGH
+        )
+        robotAlertChannel.description = "Alerts sent by the robot"
+        notificationManager.createNotificationChannel(robotAlertChannel)
     }
 }
