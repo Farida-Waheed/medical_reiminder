@@ -1,5 +1,5 @@
 {
-  "name": "medical-reminder-functions",
+  "name": "caregiver-monitor-functions",
   "private": true,
   "main": "index.js",
   "engines": {

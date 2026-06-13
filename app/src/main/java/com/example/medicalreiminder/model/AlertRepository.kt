@@ -23,7 +23,7 @@ class AlertRepository(
         }
 
         return firestore.collection("alerts")
-            .whereEqualTo("userId", userId)
+            .whereEqualTo("caregiverId", userId)
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .limit(50)
             .addSnapshotListener { snapshot, error ->
@@ -38,10 +38,14 @@ class AlertRepository(
                         title = document.getString("title").orEmpty(),
                         message = document.getString("message").orEmpty(),
                         type = document.getString("type").orEmpty(),
+                        severity = document.getString("severity").orEmpty(),
                         robotId = document.getString("robotId").orEmpty(),
-                        userId = document.getString("userId").orEmpty(),
+                        caregiverId = document.getString("caregiverId").orEmpty(),
+                        patientRoom = document.getString("patientRoom").orEmpty(),
                         timestamp = document.getTimestamp("timestamp"),
-                        isRead = document.getBoolean("isRead") ?: false
+                        isRead = document.getBoolean("isRead") ?: false,
+                        isResolved = document.getBoolean("isResolved") ?: false,
+                        resolvedAt = document.getTimestamp("resolvedAt")
                     )
                 }
                 onAlertsChanged(alerts)
@@ -56,6 +60,62 @@ class AlertRepository(
             .update("isRead", true)
             .addOnFailureListener {
                 onError(it.localizedMessage ?: "Could not mark alert as read")
+            }
+    }
+
+    fun markAsResolved(alertId: String, onError: (String) -> Unit) {
+        if (alertId.isBlank()) return
+
+        firestore.collection("alerts")
+            .document(alertId)
+            .update(
+                mapOf(
+                    "isRead" to true,
+                    "isResolved" to true,
+                    "resolvedAt" to Timestamp.now()
+                )
+            )
+            .addOnFailureListener {
+                onError(it.localizedMessage ?: "Could not mark alert as resolved")
+            }
+    }
+
+    fun listenToCurrentUserRobotStatus(
+        onStatusChanged: (RobotStatus?) -> Unit,
+        onError: (String) -> Unit
+    ): ListenerRegistration? {
+        val caregiverId = auth.currentUser?.uid
+        if (caregiverId == null) {
+            onStatusChanged(null)
+            return null
+        }
+
+        return firestore.collection("robots")
+            .whereEqualTo("caregiverId", caregiverId)
+            .limit(1)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    onError(error.localizedMessage ?: "Could not load robot status")
+                    return@addSnapshotListener
+                }
+
+                val document = snapshot?.documents?.firstOrNull()
+                if (document == null) {
+                    onStatusChanged(null)
+                    return@addSnapshotListener
+                }
+
+                onStatusChanged(
+                    RobotStatus(
+                        robotId = document.getString("robotId").orEmpty().ifBlank { document.id },
+                        caregiverId = document.getString("caregiverId").orEmpty(),
+                        patientRoom = document.getString("patientRoom").orEmpty(),
+                        status = document.getString("status").orEmpty(),
+                        batteryLevel = document.getLong("batteryLevel"),
+                        lastSeen = document.getTimestamp("lastSeen"),
+                        currentTask = document.getString("currentTask").orEmpty()
+                    )
+                )
             }
     }
 

@@ -1,28 +1,17 @@
 package com.example.medicalreiminder.viewModels
 
-import android.app.Application
 import android.content.Context
 import android.widget.Toast
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.medicalreiminder.model.DbHelper
-import com.example.medicalreiminder.model.Reminder
-import com.example.medicalreiminder.model.ReminderDao
 import com.example.medicalreiminder.model.UserModel
-import com.example.medicalreiminder.setUpAlarm
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.firestore.toObject
 import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
-class AuthenticationViewModel(app: Application) : ViewModel() {
+class AuthenticationViewModel : ViewModel() {
     val auth = Firebase.auth
 
     val firestore = Firebase.firestore
-    val db = DbHelper.getInstance(app).dao
 
     fun signUp(
         email: String,
@@ -118,52 +107,4 @@ class AuthenticationViewModel(app: Application) : ViewModel() {
     fun logOut() {
         auth.signOut()
     }
-
-    fun addReminderToFireBase(reminder: Reminder, context: Context) {
-        viewModelScope.launch {
-            firestore.collection("users")
-                .document(auth.currentUser?.uid!!)
-                .collection("reminders")
-                .document(reminder.id.toString())
-                .set(reminder)
-                .addOnCompleteListener {
-                    Toast.makeText(context, "Reminder added", Toast.LENGTH_SHORT).show()
-                }
-        }
-
-    }
-
-    fun deleteReminderFromFireBase(reminder: Reminder) {
-        viewModelScope.launch {
-            firestore.collection("users")
-                .document(auth.currentUser?.uid!!)
-                .collection("reminders")
-                .document(reminder.id.toString())
-                .delete()
-        }
-    }
-
-    suspend fun getAllRemindersFromFireBase(): List<Reminder> {
-        return try {
-            val documents = firestore.collection("users")
-                .document(auth.currentUser?.uid!!)
-                .collection("reminders")
-                .get()
-                .await()
-
-            documents.map { it.toObject<Reminder>() }
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-    fun loadIntoDb(context: Context,reminders: List<Reminder>) {
-        viewModelScope.launch {
-            for (reminder in reminders) {
-                db.upsertReminder(reminder)
-                setUpAlarm(context,reminder)
-            }
-        }
-
-    }
-
 }

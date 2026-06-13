@@ -19,11 +19,25 @@ exports.createRobotAlert = onRequest(async (req, res) => {
       return;
     }
 
-    const { robotId, title, message, type } = req.body || {};
-    if (!robotId || !title || !message || !type) {
+    const { robotId, title, message, type, severity } = req.body || {};
+    if (!robotId || !title || !message || !type || !severity) {
       res.status(400).json({
-        error: "robotId, title, message, and type are required"
+        error: "robotId, title, message, type, and severity are required"
       });
+      return;
+    }
+
+    const allowedTypes = [
+      "fall_detected",
+      "unknown_person_detected",
+      "patient_not_detected",
+      "robot_disconnected",
+      "robot_battery_low",
+      "emergency"
+    ];
+    const allowedSeverities = ["info", "warning", "emergency"];
+    if (!allowedTypes.includes(type) || !allowedSeverities.includes(severity)) {
+      res.status(400).json({ error: "Invalid alert type or severity" });
       return;
     }
 
@@ -34,9 +48,10 @@ exports.createRobotAlert = onRequest(async (req, res) => {
     }
 
     const robot = robotSnapshot.data();
-    const userId = robot.ownerUserId;
-    if (!userId) {
-      res.status(400).json({ error: "Robot has no ownerUserId" });
+    const caregiverId = robot.caregiverId;
+    const patientRoom = robot.patientRoom || req.body.patientRoom || "";
+    if (!caregiverId) {
+      res.status(400).json({ error: "Robot has no caregiverId" });
       return;
     }
 
@@ -46,17 +61,21 @@ exports.createRobotAlert = onRequest(async (req, res) => {
       title,
       message,
       type,
+      severity,
       robotId,
-      userId,
+      caregiverId,
+      patientRoom,
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      isRead: false
+      isRead: false,
+      isResolved: false,
+      resolvedAt: null
     };
 
     await alertRef.set(alert);
 
     const tokensSnapshot = await db
       .collection("users")
-      .doc(userId)
+      .doc(caregiverId)
       .collection("fcmTokens")
       .get();
 
@@ -74,6 +93,7 @@ exports.createRobotAlert = onRequest(async (req, res) => {
         data: {
           alertId: alertRef.id,
           type,
+          severity,
           robotId
         }
       });

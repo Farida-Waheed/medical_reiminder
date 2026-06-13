@@ -1,280 +1,234 @@
 package com.example.medicalreiminder.presentation
 
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.audiofx.BassBoost
-import android.net.Uri
 import android.os.Build
-import android.provider.Settings
-import androidx.compose.foundation.Image
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.medicalreiminder.R
-import com.example.medicalreiminder.cancelAlarm
-import com.example.medicalreiminder.viewModels.AuthenticationViewModel
-import com.example.medicalreiminder.viewModels.AlertViewModel
-import com.example.medicalreiminder.viewModels.ReminderViewModel
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
-import com.example.medicalreiminder.model.utils.checkGpsState
-import com.example.medicalreiminder.model.utils.getCurrentLocation
-import com.example.medicalreiminder.model.utils.hasPermission
-import com.example.medicalreiminder.model.utils.sendEmergencyMessage
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.core.content.ContextCompat
+import com.example.medicalreiminder.R
+import com.example.medicalreiminder.model.Alert
+import com.example.medicalreiminder.model.RobotStatus
+import com.example.medicalreiminder.viewModels.AlertViewModel
+import com.example.medicalreiminder.viewModels.AuthenticationViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     modifier: Modifier,
-    ReminderViewModel: ReminderViewModel,
     authenticationViewModel: AuthenticationViewModel,
     alertViewModel: AlertViewModel,
-    onAddMed: (String, Long, Long, String) -> Unit,
-    onEditMed: (Int, String, Long, Long, String) -> Unit,
     onLogout: () -> Unit,
     onAlerts: () -> Unit
 ) {
-    val medications = ReminderViewModel.reminders.collectAsState(emptyList()).value.toMutableList()
     val context = LocalContext.current
+    val alerts by alertViewModel.alerts.collectAsState()
+    val robotStatus by alertViewModel.robotStatus.collectAsState()
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = {}
+    )
+    val latestUnreadAlert = alerts.firstOrNull { !it.isRead }
+    val unresolvedEmergencyCount = alerts.count {
+        it.severity == "emergency" && !it.isResolved
+    }
+    val unreadCount = alerts.count { !it.isRead }
 
-    var menuExpanded by rememberSaveable { mutableStateOf(false) }
-    val permission = android.Manifest.permission.POST_NOTIFICATIONS
-    var showPermissionDeniedDialog by remember { mutableStateOf(false) }
-    val shouldRequestPermission = remember { mutableStateOf(false) }
-    val requestLocationPermissionLauncher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.RequestPermission(),
-            onResult = { isGranted: Boolean ->
-                if (isGranted && checkGpsState(context)) {
-                    getCurrentLocation(context) { lat, long ->
-                        sendEmergencyMessage(context, lat, long)
-                    }
-                }
-            }
-        )
-    val requestNotificationPermissionLauncher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.RequestPermission(),
-            onResult = { isGranted: Boolean ->
-                if (!isGranted) {
-                    showPermissionDeniedDialog = true
-                }
-                }
-        )
-    val isGranted = ContextCompat.checkSelfPermission(
-        context, permission
-    ) == PackageManager.PERMISSION_GRANTED
     LaunchedEffect(Unit) {
+        alertViewModel.startListening()
         alertViewModel.saveDeviceToken()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !isGranted) {
-            shouldRequestPermission.value = true
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val permissionGranted = ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!permissionGranted) {
+                notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            }
         }
     }
 
-    if (shouldRequestPermission.value) {
-        LaunchedEffect(shouldRequestPermission.value) {
-            requestNotificationPermissionLauncher.launch(permission)
-            shouldRequestPermission.value = false
-        }
-    }
-
-    Box(modifier = modifier.fillMaxSize()) {
-        // Background
-        if (showPermissionDeniedDialog) {
-            androidx.compose.material3.AlertDialog(
-                onDismissRequest = { showPermissionDeniedDialog = false },
-                title = { Text("Notification Permission Required") },
-                text = {
-                    Text("This app requires notification permissions to remind you about your medications. Please enable it from settings.")
-                },
-                confirmButton = {
-                    Button(
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.dashboard_title)) },
+                actions = {
+                    IconButton(
                         onClick = {
-                            showPermissionDeniedDialog = false
-                            // Optional: Open app settings
-                            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                data = Uri.fromParts("package", context.packageName, null)
-                            }
-                            context.startActivity(intent)
+                            alertViewModel.stopListening()
+                            authenticationViewModel.logOut()
+                            onLogout()
                         }
                     ) {
-                        Text("Open Settings")
-                    }
-                },
-                dismissButton = {
-                    Button(onClick = { showPermissionDeniedDialog = false }) {
-                        Text("Dismiss")
+                        Icon(Icons.Default.Logout, contentDescription = stringResource(R.string.logout))
                     }
                 }
             )
         }
-
-        Image(
-            painter = painterResource(id = R.drawable.backg),
-            contentDescription = "Background",
-            contentScale = ContentScale.FillBounds,
-            modifier = Modifier.fillMaxSize()
-        )
-
-        // Overflow menu (three dots)
-        Box(
+    ) { padding ->
+        Column(
             modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(6.dp)
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            IconButton(onClick = { menuExpanded = true }) {
-                Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = Color.Black)
-            }
-            DropdownMenu(
-                expanded = menuExpanded,
-                onDismissRequest = { menuExpanded = false }
+            EmergencySummaryCard(
+                unresolvedEmergencyCount = unresolvedEmergencyCount,
+                unreadCount = unreadCount
+            )
+            LatestUnreadAlertCard(
+                alert = latestUnreadAlert,
+                onOpenAlerts = onAlerts
+            )
+            RobotStatusCard(robotStatus = robotStatus)
+            Button(
+                onClick = onAlerts,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp)
             ) {
-                DropdownMenuItem(
-                    text = { Text("Robot Alerts") },
-                    onClick = {
-                        menuExpanded = false
-                        onAlerts()
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text("Logout") },
-                    onClick = {
-                        menuExpanded = false
-                        alertViewModel.stopListening()
-                       authenticationViewModel.logOut()
-                        onLogout()
-                    }
-                )
-            }
-        }
-
-        if (medications.isEmpty()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
+                Icon(Icons.Default.Notifications, contentDescription = null)
                 Text(
-                    text = "Add your first Medication to get a Reminder",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF28125B),
-                    modifier = Modifier.padding(horizontal = 20.dp)
+                    text = stringResource(R.string.open_alert_history),
+                    modifier = Modifier.padding(start = 8.dp)
                 )
-                Spacer(modifier = Modifier.height(20.dp))
-                Button(
-                    onClick = { onAddMed("", 0L, 0L, "") },
-                    shape = RoundedCornerShape(20.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF77AADA)),
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .height(50.dp)
-                        .width(200.dp)
-                ) {
-                    Text("Add your Med", fontSize = 16.sp, color = Color.White)
-                }
-            }
-        } else {
-            LazyColumn(modifier = Modifier.padding(top=40.dp)) {
-                items(medications) { med ->
-                    RemiderCard(
-                        reminder = med,
-                        onDelete = {
-                            ReminderViewModel.deleteReminder(med)
-                            authenticationViewModel.deleteReminderFromFireBase(med)
-                            cancelAlarm(context, med)
-                        }) {
-                        onEditMed(
-                            med.id,
-                            med.name,
-                            med.time,
-                            med.timeOffset,
-                            med.dose
-                        )
-                    }
-                }
-            }
-            FloatingActionButton(
-                onClick = { onAddMed("", 0L, 0L, "") },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp),
-                shape = CircleShape,
-                containerColor = Color(0xFF77AADA)
-            ) {
-                Text("+", fontSize = 24.sp, color = Color.White)
             }
         }
-
-        // SOS Button
-        FloatingActionButton(
-            onClick = {
-                if (hasPermission(context)) {
-                    if (checkGpsState(context)) {
-                    //Toast.makeText(context, "has gps", Toast.LENGTH_SHORT).show()
-                        getCurrentLocation(context) { lat, long ->
-                            sendEmergencyMessage(context, lat, long)
-                        }
-                    } else {
-                        Toast.makeText(context, "Please turn GPS on", Toast.LENGTH_SHORT).show()
-                    }
-                } else {
-                    requestLocationPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
-                }
-            },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 16.dp, bottom = 90.dp),
-            shape = CircleShape,
-            containerColor = Color.Red
-        ) {
-            Text("SOS", fontSize = 16.sp, color = Color.White, fontWeight = FontWeight.Bold)
-        }
-
-        // "+" Add Med Button
-
     }
+}
+
+@Composable
+private fun EmergencySummaryCard(
+    unresolvedEmergencyCount: Int,
+    unreadCount: Int
+) {
+    val hasEmergency = unresolvedEmergencyCount > 0
+    val color = if (hasEmergency) Color(0xFFFFE7E7) else Color(0xFFEAF7EE)
+    val title = if (hasEmergency) {
+        stringResource(R.string.emergency_active)
+    } else {
+        stringResource(R.string.emergency_stable)
+    }
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = color),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.Default.Warning,
+                contentDescription = null,
+                tint = if (hasEmergency) Color(0xFFC62828) else Color(0xFF2E7D32)
+            )
+            Column(modifier = Modifier.padding(start = 12.dp)) {
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.unresolved_emergencies, unresolvedEmergencyCount))
+                Text(stringResource(R.string.unread_alerts, unreadCount))
+            }
+        }
+    }
+}
+
+@Composable
+private fun LatestUnreadAlertCard(
+    alert: Alert?,
+    onOpenAlerts: () -> Unit
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = stringResource(R.string.latest_unread_alert),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            if (alert == null) {
+                Text(stringResource(R.string.no_unread_alerts))
+            } else {
+                Text(alert.title.ifBlank { stringResource(R.string.robot_alert) }, fontWeight = FontWeight.Bold)
+                Text(alert.message)
+                Text(stringResource(R.string.severity_value, alert.severity.ifBlank { "-" }))
+                Text(stringResource(R.string.patient_room_value, alert.patientRoom.ifBlank { "-" }))
+                Text(formatTimestamp(alert.timestamp?.toDate()?.time))
+                Button(
+                    onClick = onOpenAlerts,
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .padding(top = 8.dp),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(stringResource(R.string.view_details))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RobotStatusCard(robotStatus: RobotStatus?) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = stringResource(R.string.robot_status),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(stringResource(R.string.robot_id_value, robotStatus?.robotId?.ifBlank { "-" } ?: "-"))
+            Text(stringResource(R.string.status_value, robotStatus?.status?.ifBlank { "-" } ?: "-"))
+            Text(stringResource(R.string.battery_value, robotStatus?.batteryLevel?.toString() ?: "-"))
+            Text(stringResource(R.string.current_task_value, robotStatus?.currentTask?.ifBlank { "-" } ?: "-"))
+            Text(stringResource(R.string.patient_room_value, robotStatus?.patientRoom?.ifBlank { "-" } ?: "-"))
+            Text(
+                stringResource(
+                    R.string.last_seen_value,
+                    formatTimestamp(robotStatus?.lastSeen?.toDate()?.time)
+                )
+            )
+        }
+    }
+}
+
+private fun formatTimestamp(timeMillis: Long?): String {
+    if (timeMillis == null) return "-"
+    return SimpleDateFormat("MMM d, yyyy h:mm a", Locale.getDefault()).format(Date(timeMillis))
 }

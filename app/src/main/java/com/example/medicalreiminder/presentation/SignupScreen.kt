@@ -26,6 +26,7 @@ import com.example.medicalreiminder.R
 import com.example.medicalreiminder.viewModels.AuthenticationViewModel
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun SignupScreen(
@@ -79,13 +80,13 @@ fun SignupScreen(
 
             // Signup Texts
             Text(
-                text = "Let's Sign You up",
+                text = stringResource(R.string.caregiver_signup),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF502693)
             )
             Text(
-                text = "Hello and Welcome!",
+                text = stringResource(R.string.caregiver_signup_subtitle),
                 fontSize = 14.sp,
                 color = Color.Gray
             )
@@ -96,7 +97,7 @@ fun SignupScreen(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Name") },
+                label = { Text(stringResource(R.string.caregiver_name)) },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -106,7 +107,7 @@ fun SignupScreen(
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text("Email", color = textColor) },
+                label = { Text(stringResource(R.string.email), color = textColor) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -117,8 +118,8 @@ fun SignupScreen(
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Password", color = textColor) },
-                placeholder = { Text("at least 8 characters", color = textColor) },
+                label = { Text(stringResource(R.string.password), color = textColor) },
+                placeholder = { Text(stringResource(R.string.password_hint), color = textColor) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
@@ -151,7 +152,7 @@ fun SignupScreen(
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E6FFA))
             ) {
-                Text("Sign up", fontSize = 18.sp, color = Color.White)
+                Text(stringResource(R.string.signup), fontSize = 18.sp, color = Color.White)
             }
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -161,13 +162,13 @@ fun SignupScreen(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Already have an account? ", fontSize = 14.sp, color = textColor)
+                Text(stringResource(R.string.already_have_account), fontSize = 14.sp, color = textColor)
                 TextButton(
                     onClick = { goToLogin() },
                     modifier = Modifier
                         .offset(x = (-8).dp, y = (-2).dp) // Moved left and up
                 ) {
-                    Text("Log in", fontSize = 14.sp, color = Color.Blue)
+                    Text(stringResource(R.string.login), fontSize = 14.sp, color = Color.Blue)
                 }
             }
         }
@@ -202,13 +203,13 @@ fun SignupScreen(
 
                 // Signup Texts
                 Text(
-                    text = "Let's Sign You up",
+                    text = stringResource(R.string.caregiver_signup),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF502693)
                 )
                 Text(
-                    text = "Hello and Welcome!",
+                    text = stringResource(R.string.caregiver_signup_subtitle),
                     fontSize = 14.sp,
                     color = Color.Gray
                 )
@@ -220,7 +221,7 @@ fun SignupScreen(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Name") },
+                    label = { Text(stringResource(R.string.caregiver_name)) },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -230,7 +231,7 @@ fun SignupScreen(
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = { Text("Email", color = textColor) },
+                    label = { Text(stringResource(R.string.email), color = textColor) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -241,8 +242,8 @@ fun SignupScreen(
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text("Password", color = textColor) },
-                    placeholder = { Text("at least 8 characters", color = textColor) },
+                    label = { Text(stringResource(R.string.password), color = textColor) },
+                    placeholder = { Text(stringResource(R.string.password_hint), color = textColor) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
@@ -275,7 +276,7 @@ fun SignupScreen(
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E6FFA))
                 ) {
-                    Text("Sign up", fontSize = 18.sp, color = Color.White)
+                    Text(stringResource(R.string.signup), fontSize = 18.sp, color = Color.White)
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -285,13 +286,13 @@ fun SignupScreen(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Already have an account? ", fontSize = 14.sp, color = textColor)
+                    Text(stringResource(R.string.already_have_account), fontSize = 14.sp, color = textColor)
                     TextButton(
                         onClick = { goToLogin() },
                         modifier = Modifier
                             .offset(x = (-8).dp, y = (-2).dp) // Moved left and up
                     ) {
-                        Text("Log in", fontSize = 14.sp, color = Color.Blue)
+                        Text(stringResource(R.string.login), fontSize = 14.sp, color = Color.Blue)
                     }
                 }
             }

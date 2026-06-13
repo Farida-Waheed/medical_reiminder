@@ -7,9 +7,10 @@ ROBOT_SECRET = os.environ["ROBOT_ALERT_SECRET"]
 
 payload = {
     "robotId": "robot_001",
-    "title": "Medicine Reminder",
-    "message": "It is time to take your medicine.",
-    "type": "medicine_reminder",
+    "title": "Fall detected",
+    "message": "The robot detected a possible patient fall in the monitored room.",
+    "type": "fall_detected",
+    "severity": "emergency",
 }
 
 response = requests.post(

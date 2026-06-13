@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -20,10 +19,8 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -32,7 +29,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,17 +36,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import androidx.room.util.TableInfo
 import com.example.medicalreiminder.R
-import com.example.medicalreiminder.model.Reminder
 import com.example.medicalreiminder.viewModels.AuthenticationViewModel
-import kotlinx.coroutines.launch
 
 @Composable
 fun LoginPage(
@@ -67,7 +60,6 @@ fun LoginPage(
     val context = LocalContext.current
     val isDarkTheme = isSystemInDarkTheme()
     var textColor by remember { mutableStateOf(Color.Black) }
-    val scope = rememberCoroutineScope()  // Needed for launching coroutine in Composable
     if (isDarkTheme) {
         textColor = Color.White
     } else {
@@ -94,7 +86,7 @@ fun LoginPage(
                     .offset(x = 1.dp, y = 4.dp)
             )
             Text(
-                text = "Login Page",
+                text = stringResource(R.string.caregiver_login),
                 fontSize = 36.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFFDA6B53)
@@ -104,7 +96,7 @@ fun LoginPage(
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text(text = "Email", color = textColor) },
+                label = { Text(text = stringResource(R.string.email), color = textColor) },
                 modifier = Modifier
                     .fillMaxWidth()  // Only added this line
                     .padding(horizontal = 16.dp)  // And this line
@@ -114,7 +106,7 @@ fun LoginPage(
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text(text = "Password", color = textColor) },
+                label = { Text(text = stringResource(R.string.password), color = textColor) },
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -137,11 +129,7 @@ fun LoginPage(
 
                     authViewModel.login(email, password, context) { state, message ->
                         if (state) {
-                            scope.launch {
-                                val reminders = authViewModel.getAllRemindersFromFireBase()
-                                authViewModel.loadIntoDb(context,reminders)
-                                onLogIn()
-                            }
+                            onLogIn()
                         } else {
                             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                         }
@@ -154,13 +142,13 @@ fun LoginPage(
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E6FFA))
             ) {
-                Text(text = "Login")
+                Text(text = stringResource(R.string.login))
             }
 
             Spacer(modifier = Modifier.height(10.dp))
 
             TextButton(onClick = { onSignUp() }) {
-                Text(text = "Don't have an account, Signup", color = textColor)
+                Text(text = stringResource(R.string.create_caregiver_account), color = textColor)
             }
 
             TextButton(onClick = {
@@ -170,7 +158,7 @@ fun LoginPage(
                     Toast.makeText(context, "Please enter your email", Toast.LENGTH_SHORT).show()
                 }
             }) {
-                Text(text = "Forgot Password?", color = textColor)
+                Text(text = stringResource(R.string.forgot_password), color = textColor)
             }
 
 
@@ -190,7 +178,7 @@ fun LoginPage(
                         .offset(x = 1.dp, y = 4.dp)
                 )
                 Text(
-                    text = "Login Page",
+                    text = stringResource(R.string.caregiver_login),
                     fontSize = 36.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFFDA6B53)
@@ -202,7 +190,7 @@ fun LoginPage(
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = { Text(text = "Email", color = textColor) },
+                    label = { Text(text = stringResource(R.string.email), color = textColor) },
                     modifier = Modifier
                         .fillMaxWidth()  // Only added this line
                         .padding(horizontal = 16.dp)  // And this line
@@ -212,7 +200,7 @@ fun LoginPage(
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text(text = "Password", color = textColor) },
+                    label = { Text(text = stringResource(R.string.password), color = textColor) },
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -235,11 +223,7 @@ fun LoginPage(
 
                         authViewModel.login(email, password, context) { state, message ->
                             if (state) {
-                                scope.launch {
-                                    val reminders = authViewModel.getAllRemindersFromFireBase()
-                                    authViewModel.loadIntoDb(context,reminders)
-                                    onLogIn()
-                                }
+                                onLogIn()
                             } else {
                                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                             }
@@ -252,13 +236,13 @@ fun LoginPage(
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E6FFA))
                 ) {
-                    Text(text = "Login")
+                    Text(text = stringResource(R.string.login))
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
 
                 TextButton(onClick = { onSignUp() }) {
-                    Text(text = "Don't have an account, Signup", color = textColor)
+                    Text(text = stringResource(R.string.create_caregiver_account), color = textColor)
                 }
 
                 TextButton(onClick = {
@@ -268,7 +252,7 @@ fun LoginPage(
                         Toast.makeText(context, "Please enter your email", Toast.LENGTH_SHORT).show()
                     }
                 }) {
-                    Text(text = "Forgot Password?", color = textColor)
+                    Text(text = stringResource(R.string.forgot_password), color = textColor)
                 }
 
             }

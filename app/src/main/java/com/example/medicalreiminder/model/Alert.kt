@@ -7,8 +7,12 @@ data class Alert(
     val title: String = "",
     val message: String = "",
     val type: String = "",
+    val severity: String = "",
     val robotId: String = "",
-    val userId: String = "",
+    val caregiverId: String = "",
+    val patientRoom: String = "",
     val timestamp: Timestamp? = null,
-    val isRead: Boolean = false
+    val isRead: Boolean = false,
+    val isResolved: Boolean = false,
+    val resolvedAt: Timestamp? = null
 )
