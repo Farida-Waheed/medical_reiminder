@@ -19,6 +19,7 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -53,10 +54,10 @@ fun AlertsScreen(
 ) {
     val alerts by alertViewModel.alerts.collectAsState()
     val errorMessage by alertViewModel.errorMessage.collectAsState()
+    val isAlertsLoading by alertViewModel.isAlertsLoading.collectAsState()
 
     LaunchedEffect(Unit) {
         alertViewModel.startListening()
-        alertViewModel.saveDeviceToken()
     }
 
     Scaffold(
@@ -89,7 +90,9 @@ fun AlertsScreen(
                 }
             }
 
-            if (alerts.isEmpty()) {
+            if (isAlertsLoading) {
+                LoadingAlerts()
+            } else if (alerts.isEmpty()) {
                 EmptyAlerts()
             } else {
                 LazyColumn(
@@ -106,6 +109,19 @@ fun AlertsScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun LoadingAlerts() {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        CircularProgressIndicator()
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(stringResource(R.string.loading_alerts))
     }
 }
 

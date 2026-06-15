@@ -5,12 +5,10 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
-import com.google.firebase.messaging.FirebaseMessaging
 
 class AlertRepository(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
-    private val messaging: FirebaseMessaging = FirebaseMessaging.getInstance()
+    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
     fun listenToCurrentUserAlerts(
         onAlertsChanged: (List<Alert>) -> Unit,
@@ -119,34 +117,4 @@ class AlertRepository(
             }
     }
 
-    fun saveCurrentDeviceToken(onError: (String) -> Unit = {}) {
-        val userId = auth.currentUser?.uid ?: return
-
-        messaging.token
-            .addOnSuccessListener { token ->
-                saveDeviceToken(userId, token, onError)
-            }
-            .addOnFailureListener {
-                onError(it.localizedMessage ?: "Could not save notification token")
-            }
-    }
-
-    fun saveDeviceToken(userId: String, token: String, onError: (String) -> Unit = {}) {
-        if (userId.isBlank() || token.isBlank()) return
-
-        val tokenData = mapOf(
-            "token" to token,
-            "createdAt" to Timestamp.now(),
-            "platform" to "android"
-        )
-
-        firestore.collection("users")
-            .document(userId)
-            .collection("fcmTokens")
-            .document(token)
-            .set(tokenData)
-            .addOnFailureListener {
-                onError(it.localizedMessage ?: "Could not save notification token")
-            }
-    }
 }

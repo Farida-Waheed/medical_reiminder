@@ -21,23 +21,42 @@ class AlertViewModel(
     private val _robotStatus = MutableStateFlow<RobotStatus?>(null)
     val robotStatus: StateFlow<RobotStatus?> = _robotStatus.asStateFlow()
 
+    private val _isAlertsLoading = MutableStateFlow(false)
+    val isAlertsLoading: StateFlow<Boolean> = _isAlertsLoading.asStateFlow()
+
+    private val _isRobotStatusLoading = MutableStateFlow(false)
+    val isRobotStatusLoading: StateFlow<Boolean> = _isRobotStatusLoading.asStateFlow()
+
     private var alertListenerRegistration: ListenerRegistration? = null
     private var robotStatusListenerRegistration: ListenerRegistration? = null
 
     fun startListening() {
         if (alertListenerRegistration != null && robotStatusListenerRegistration != null) return
 
-        repository.saveCurrentDeviceToken(::showError)
         if (alertListenerRegistration == null) {
+            _isAlertsLoading.value = true
             alertListenerRegistration = repository.listenToCurrentUserAlerts(
-                onAlertsChanged = { _alerts.value = it },
-                onError = ::showError
+                onAlertsChanged = {
+                    _alerts.value = it
+                    _isAlertsLoading.value = false
+                },
+                onError = {
+                    _isAlertsLoading.value = false
+                    showError(it)
+                }
             )
         }
         if (robotStatusListenerRegistration == null) {
+            _isRobotStatusLoading.value = true
             robotStatusListenerRegistration = repository.listenToCurrentUserRobotStatus(
-                onStatusChanged = { _robotStatus.value = it },
-                onError = ::showError
+                onStatusChanged = {
+                    _robotStatus.value = it
+                    _isRobotStatusLoading.value = false
+                },
+                onError = {
+                    _isRobotStatusLoading.value = false
+                    showError(it)
+                }
             )
         }
     }
@@ -50,10 +69,6 @@ class AlertViewModel(
         repository.markAsResolved(alertId, ::showError)
     }
 
-    fun saveDeviceToken() {
-        repository.saveCurrentDeviceToken(::showError)
-    }
-
     fun stopListening() {
         alertListenerRegistration?.remove()
         robotStatusListenerRegistration?.remove()
@@ -61,6 +76,8 @@ class AlertViewModel(
         robotStatusListenerRegistration = null
         _alerts.value = emptyList()
         _robotStatus.value = null
+        _isAlertsLoading.value = false
+        _isRobotStatusLoading.value = false
     }
 
     fun clearError() {

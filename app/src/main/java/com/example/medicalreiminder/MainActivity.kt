@@ -13,7 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.medicalreiminder.presentation.Navigation
-import com.example.medicalreiminder.ui.theme.MedicalReiminderTheme
+import com.example.medicalreiminder.ui.theme.JaleesTheme
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
@@ -28,7 +28,7 @@ class MainActivity : ComponentActivity() {
         auth = Firebase.auth
         setContent {
 
-            MedicalReiminderTheme {
+            JaleesTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Navigation(
                         modifier = Modifier.padding(innerPadding), appContext = application
@@ -50,7 +50,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
-    MedicalReiminderTheme {
+    JaleesTheme {
         Greeting("Android")
     }
 }

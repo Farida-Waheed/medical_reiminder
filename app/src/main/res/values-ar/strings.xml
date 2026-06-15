@@ -1,9 +1,9 @@
 <resources>
-    <string name="app_name">مراقبة مقدم الرعاية</string>
-    <string name="title_activity_signup">SignupActivity</string>
-    <string name="dashboard_title">لوحة طوارئ مقدم الرعاية</string>
+    <string name="app_name">جليس</string>
+    <string name="title_activity_signup">تسجيل جليس</string>
+    <string name="dashboard_title">لوحة طوارئ جليس</string>
     <string name="logout">تسجيل الخروج</string>
-    <string name="emergency_active">توجد حالة طوارئ تحتاج انتباه</string>
+    <string name="emergency_active">توجد حالة طوارئ تحتاج إلى انتباه</string>
     <string name="emergency_stable">مراقبة المريض مستقرة</string>
     <string name="unresolved_emergencies">حالات الطوارئ غير المحلولة: %1$d</string>
     <string name="unread_alerts">التنبيهات غير المقروءة: %1$d</string>
@@ -45,4 +45,17 @@
     <string name="create_caregiver_account">إنشاء حساب مقدم رعاية</string>
     <string name="forgot_password">هل نسيت كلمة المرور؟</string>
     <string name="already_have_account">لديك حساب بالفعل؟ </string>
+    <string name="jalees_arabic_name">جليس</string>
+    <string name="loading_alerts">جار تحميل تنبيهات الطوارئ...</string>
+    <string name="loading_robot_status">جار تحميل حالة الروبوت...</string>
+    <string name="no_robot_status">لم يتم ربط روبوت بهذا الحساب بعد.</string>
+    <string name="retry">إعادة المحاولة</string>
+    <string name="auth_loading">يرجى الانتظار...</string>
+    <string name="email_not_verified">يرجى تأكيد البريد الإلكتروني أولا.</string>
+    <string name="missing_login_fields">يرجى إدخال البريد الإلكتروني وكلمة المرور.</string>
+    <string name="missing_signup_fields">يرجى إدخال الاسم والبريد الإلكتروني وكلمة المرور.</string>
+    <string name="password_reset_sent">تم إرسال رابط إعادة تعيين كلمة المرور.</string>
+    <string name="password_reset_email_required">يرجى إدخال البريد الإلكتروني أولا.</string>
+    <string name="check_email">يرجى فحص بريدك الإلكتروني.</string>
+    <string name="generic_error">حدث خطأ ما.</string>
 </resources>

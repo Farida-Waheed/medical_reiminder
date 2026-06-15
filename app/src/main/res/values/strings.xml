@@ -1,7 +1,7 @@
 <resources>
-    <string name="app_name">Caregiver Monitor</string>
-    <string name="title_activity_signup">SignupActivity</string>
-    <string name="dashboard_title">Caregiver Emergency Dashboard</string>
+    <string name="app_name">جليس</string>
+    <string name="title_activity_signup">Jalees Signup</string>
+    <string name="dashboard_title">Jalees Emergency Dashboard</string>
     <string name="logout">Logout</string>
     <string name="emergency_active">Emergency attention needed</string>
     <string name="emergency_stable">Patient monitoring stable</string>
@@ -45,4 +45,17 @@
     <string name="create_caregiver_account">Create caregiver account</string>
     <string name="forgot_password">Forgot password?</string>
     <string name="already_have_account">Already have an account? </string>
+    <string name="jalees_arabic_name">جليس</string>
+    <string name="loading_alerts">Loading emergency alerts...</string>
+    <string name="loading_robot_status">Loading robot status...</string>
+    <string name="no_robot_status">No robot is paired with this caregiver yet.</string>
+    <string name="retry">Retry</string>
+    <string name="auth_loading">Please wait...</string>
+    <string name="email_not_verified">Please verify your email first.</string>
+    <string name="missing_login_fields">Please enter your email and password.</string>
+    <string name="missing_signup_fields">Please enter your name, email, and password.</string>
+    <string name="password_reset_sent">Password reset email sent.</string>
+    <string name="password_reset_email_required">Please enter your email first.</string>
+    <string name="check_email">Please check your email.</string>
+    <string name="generic_error">Something went wrong.</string>
 </resources>

@@ -1,9 +1,5 @@
 package com.example.medicalreiminder.presentation
 
-import android.content.pm.PackageManager
-import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,14 +8,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -33,11 +31,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import com.example.medicalreiminder.R
 import com.example.medicalreiminder.model.Alert
 import com.example.medicalreiminder.model.RobotStatus
@@ -56,13 +52,11 @@ fun MainScreen(
     onLogout: () -> Unit,
     onAlerts: () -> Unit
 ) {
-    val context = LocalContext.current
     val alerts by alertViewModel.alerts.collectAsState()
     val robotStatus by alertViewModel.robotStatus.collectAsState()
-    val notificationPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = {}
-    )
+    val errorMessage by alertViewModel.errorMessage.collectAsState()
+    val isAlertsLoading by alertViewModel.isAlertsLoading.collectAsState()
+    val isRobotStatusLoading by alertViewModel.isRobotStatusLoading.collectAsState()
     val latestUnreadAlert = alerts.firstOrNull { !it.isRead }
     val unresolvedEmergencyCount = alerts.count {
         it.severity == "emergency" && !it.isResolved
@@ -71,16 +65,6 @@ fun MainScreen(
 
     LaunchedEffect(Unit) {
         alertViewModel.startListening()
-        alertViewModel.saveDeviceToken()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val permissionGranted = ContextCompat.checkSelfPermission(
-                context,
-                android.Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-            if (!permissionGranted) {
-                notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-            }
-        }
     }
 
     Scaffold(
@@ -96,7 +80,7 @@ fun MainScreen(
                             onLogout()
                         }
                     ) {
-                        Icon(Icons.Default.Logout, contentDescription = stringResource(R.string.logout))
+                        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = stringResource(R.string.logout))
                     }
                 }
             )
@@ -113,11 +97,22 @@ fun MainScreen(
                 unresolvedEmergencyCount = unresolvedEmergencyCount,
                 unreadCount = unreadCount
             )
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage.orEmpty(),
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
             LatestUnreadAlertCard(
                 alert = latestUnreadAlert,
+                isLoading = isAlertsLoading,
                 onOpenAlerts = onAlerts
             )
-            RobotStatusCard(robotStatus = robotStatus)
+            RobotStatusCard(
+                robotStatus = robotStatus,
+                isLoading = isRobotStatusLoading
+            )
             Button(
                 onClick = onAlerts,
                 modifier = Modifier.fillMaxWidth(),
@@ -171,6 +166,7 @@ private fun EmergencySummaryCard(
 @Composable
 private fun LatestUnreadAlertCard(
     alert: Alert?,
+    isLoading: Boolean,
     onOpenAlerts: () -> Unit
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
@@ -181,7 +177,15 @@ private fun LatestUnreadAlertCard(
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(8.dp))
-            if (alert == null) {
+            if (isLoading) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    Text(
+                        text = stringResource(R.string.loading_alerts),
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
+            } else if (alert == null) {
                 Text(stringResource(R.string.no_unread_alerts))
             } else {
                 Text(alert.title.ifBlank { stringResource(R.string.robot_alert) }, fontWeight = FontWeight.Bold)
@@ -204,7 +208,10 @@ private fun LatestUnreadAlertCard(
 }
 
 @Composable
-private fun RobotStatusCard(robotStatus: RobotStatus?) {
+private fun RobotStatusCard(
+    robotStatus: RobotStatus?,
+    isLoading: Boolean
+) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -213,17 +220,31 @@ private fun RobotStatusCard(robotStatus: RobotStatus?) {
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Text(stringResource(R.string.robot_id_value, robotStatus?.robotId?.ifBlank { "-" } ?: "-"))
-            Text(stringResource(R.string.status_value, robotStatus?.status?.ifBlank { "-" } ?: "-"))
-            Text(stringResource(R.string.battery_value, robotStatus?.batteryLevel?.toString() ?: "-"))
-            Text(stringResource(R.string.current_task_value, robotStatus?.currentTask?.ifBlank { "-" } ?: "-"))
-            Text(stringResource(R.string.patient_room_value, robotStatus?.patientRoom?.ifBlank { "-" } ?: "-"))
-            Text(
-                stringResource(
-                    R.string.last_seen_value,
-                    formatTimestamp(robotStatus?.lastSeen?.toDate()?.time)
-                )
-            )
+            when {
+                isLoading -> Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    Text(
+                        text = stringResource(R.string.loading_robot_status),
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
+
+                robotStatus == null -> Text(stringResource(R.string.no_robot_status))
+
+                else -> {
+                    Text(stringResource(R.string.robot_id_value, robotStatus.robotId.ifBlank { "-" }))
+                    Text(stringResource(R.string.status_value, robotStatus.status.ifBlank { "-" }))
+                    Text(stringResource(R.string.battery_value, robotStatus.batteryLevel?.toString() ?: "-"))
+                    Text(stringResource(R.string.current_task_value, robotStatus.currentTask.ifBlank { "-" }))
+                    Text(stringResource(R.string.patient_room_value, robotStatus.patientRoom.ifBlank { "-" }))
+                    Text(
+                        stringResource(
+                            R.string.last_seen_value,
+                            formatTimestamp(robotStatus.lastSeen?.toDate()?.time)
+                        )
+                    )
+                }
+            }
         }
     }
 }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Jalees" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">@color/jalees_surface</item>
+        <item name="android:windowSplashScreenBackground">@color/jalees_surface</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/jalees_app_icon</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/jalees_surface</item>
+        <item name="android:windowSplashScreenBrandingImage">@drawable/jalees_app_icon</item>
+    </style>
+</resources>
